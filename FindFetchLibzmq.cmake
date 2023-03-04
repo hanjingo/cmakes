@@ -13,15 +13,22 @@ endif()
 if (NOT LIBZMQ_ROOT)
     set(LIBZMQ_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/libzmq/${LIBZMQ_VERSION})
 endif()
-if (NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-    set(LIBZMQ_LIB_PATH ${LIBZMQ_ROOT}/build)
-else()
-    set(LIBZMQ_LIB_PATH ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Debug")
 endif()
-if (NOT BUILD_SHARED)
-    if (NOT BUILD_STATIC)
-        set(BUILD_STATIC ON)
-    endif()
+if (NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LIBZMQ_ROOT}/lib)
+endif()
+if (NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LIBZMQ_ROOT}/lib)
+endif()
+if (NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LIBZMQ_ROOT}/bin)
+endif()
+if(MSVC)
+    set(MSVC_TOOLSET "-${CMAKE_VS_PLATFORM_TOOLSET}")
+else()
+    set(MSVC_TOOLSET "")
 endif()
 
 # --------------------------------------------------------------------------------
@@ -56,7 +63,7 @@ if (WIN32)
     set(BUILD_CMD devenv.exe)
     list(APPEND BUILD_ARGS ZeroMQ.sln)
     list(APPEND BUILD_ARGS /Build)
-    list(APPEND BUILD_ARGS "Debug|Win32")
+    list(APPEND BUILD_ARGS "${CMAKE_BUILD_TYPE}|Win32")
     list(APPEND BUILD_ARGS /Project)
     list(APPEND BUILD_ARGS libzmq-static)
 endif()
@@ -78,7 +85,6 @@ list(APPEND CMAKE_ARGS -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${CMAKE_RUNTIME_OUTPUT_D
 
 # --------------------------------------------------------------------------------
 # build
-
 if (${FETCH_LIBZMQ_PASS})
     FetchContent_GetProperties(${LIBZMQ_FETCH_CONTENT})
     if(NOT ${LIBZMQ_FETCH_CONTENT}_POPULATED)
@@ -98,5 +104,21 @@ if (${FETCH_LIBZMQ_PASS})
 
 endif()
 
-set(Libzmq_INCLUDE_DIRS ${LIBZMQ_ROOT}/include CACHE PATH "Libzmq head file path")
-set(Libzmq_LIBRARY_DIRS ${LIBZMQ_LIB_PATH} CACHE PATH "Libzmq library file path")
+set(Libzmq_INCLUDE_DIRS ${LIBZMQ_ROOT}/include 
+    CACHE PATH "Libzmq head file path")
+set(Libzmq_LIBRARY_DIRS ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE} 
+    CACHE PATH "Libzmq library file path")
+
+string(REPLACE "." "_" DLL_VERSION "${LIBZMQ_VERSION}")
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(Libzmq_NAME_SHARED  "libzmq${MSVC_TOOLSET}-mt-gd-${DLL_VERSION}" 
+        CACHE STRING "Libzmq shared library file name")
+    set(Libzmq_NAME_STATIC  "libzmq${MSVC_TOOLSET}-mt-gd-${DLL_VERSION}" 
+        CACHE STRING "Libzmq static library file name")
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    set(Libzmq_NAME_SHARED  "libzmq${MSVC_TOOLSET}-mt-${DLL_VERSION}" 
+        CACHE STRING "Libzmq shared library file name")
+    set(Libzmq_NAME_STATIC  "libzmq${MSVC_TOOLSET}-mt-${DLL_VERSION}" 
+        CACHE STRING "Libzmq static library file name")
+endif()
