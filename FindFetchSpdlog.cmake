@@ -22,9 +22,9 @@ FetchContent_Declare(
     SOURCE_DIR ${SPDLOG_ROOT}
 )
 FetchContent_Declare(
-    git_spdlog_1.11.0
+    git_spdlog_${SPDLOG_VERSION}
     GIT_REPOSITORY https://github.com/gabime/spdlog.git
-    GIT_TAG v1.11.0
+    GIT_TAG v${SPDLOG_VERSION}
     SOURCE_DIR ${SPDLOG_ROOT}
 )
 
