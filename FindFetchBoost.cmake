@@ -3,19 +3,28 @@ include(FetchContent)
 #-----------------------------option--------------------------
 set(FETCH_BOOST_PASS true)
 
-if (NOT BOOST_VERSION)
-    set(BOOST_VERSION "1.80.0" CACHE STRING "boost version")
+if (NOT BOOST_VERSION_MAJOR)
+    set(BOOST_VERSION_MAJOR "1" CACHE STRING "boost major version")
 endif()
+if (NOT BOOST_VERSION_MINOR)
+    set(BOOST_VERSION_MINOR "75" CACHE STRING "boost minor version")
+endif()
+if (NOT BOOST_VERSION_PATCH)
+    set(BOOST_VERSION_PATCH "0" CACHE STRING "boost patch version")
+endif()
+set(${BOOST_VERSION} ${BOOST_VERSION_MAJOR}.${BOOST_VERSION_MINOR}.${BOOST_VERSION_PATCH} CACHE STRING "boost version")
+
 if (NOT BOOST_FETCH_WAY)
     set(BOOST_FETCH_WAY "https" CACHE STRING "booset fetch way: https, git, ...")
 endif()
 if (NOT BOOST_ROOT)
     set(BOOST_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/boost/${BOOST_VERSION})
 endif()
-if (NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-    set(BOOST_LIB_PATH ${BOOST_ROOT}/stage/lib)
-else()
-    set(BOOST_LIB_PATH ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
+if (NOT Boost_INCLUDE_DIRS)
+    set(Boost_INCLUDE_DIRS ${BOOST_ROOT} CACHE PATH "boost include dir")
+endif()
+if (NOT Boost_LIBRARY_DIRS)
+    set(Boost_LIBRARY_DIRS ${BOOST_LIB_PATH}/lib CACHE PATH "boost library dir")
 endif()
 
 option(USE_BOOST_ALL             "enable all boost component" OFF)
@@ -224,19 +233,10 @@ endif()
 
 #-------------------------fetch declare------------------------
 
-# boost 1.80.0
+# boost
 FetchContent_Declare(
-    https_boost_1.80.0
-    URL https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.zip
-    URL_HASH SHA256=e34756f63abe8ac34b35352743f17d061fcc825969a2dd8458264edb38781782
-    SOURCE_DIR ${BOOST_ROOT}
-)
-
-# boost 1.81.0
-FetchContent_Declare(
-    https_boost_1.81.0
-    URL https://boostorg.jfrog.io/artifactory/main/release/1.81.0/source/boost_1_81_0.zip
-    URL_HASH SHA256=6e689b266b27d4db57f648b1e5c905c8acd6716b46716a12f6fc73fc80af842e
+    ${BOOST_FETCH_WAY}_boost_${BOOST_VERSION}
+    URL https://archives.boost.io/release/${BOOST_VERSION}/source/boost_${BOOST_VERSION_MAJOR}_${BOOST_VERSION_MINOR}_${BOOST_VERSION_PATCH}.zip
     SOURCE_DIR ${BOOST_ROOT}
 )
 
@@ -244,6 +244,9 @@ set( BOOST_FETCH_CONTENT "${BOOST_FETCH_WAY}_boost_${BOOST_VERSION}" )
 
 #-------------------------config---------------------------------
 if (UNIX)
+    set(CONFIG_CMD bootstrap.sh)
+
+    set(BUILD_CMD b2)
 endif()
 
 if (WIN32)
@@ -275,6 +278,3 @@ if (${FETCH_BOOST_PASS})
     execute_process(COMMAND ${BUILD_CMD} ${ARGS} ${OPTIONS}
                     WORKING_DIRECTORY ${BOOST_ROOT})
 endif()
-
-set(Boost_INCLUDE_DIRS ${BOOST_ROOT} CACHE PATH "boost include dir")
-set(Boost_LIBRARY_DIRS ${BOOST_LIB_PATH}/lib CACHE PATH "boost library dir")
