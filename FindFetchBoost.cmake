@@ -239,7 +239,7 @@ set(TARGET_FILE_NAME "boost_${BOOST_VERSION_MAJOR}_${BOOST_VERSION_MINOR}_${BOOS
 
 # boost
 FetchContent_Declare(
-    ${BOOST_FETCH_WAY}_boost_${BOOST_VERSION}
+    https_boost_${BOOST_VERSION}
     URL https://archives.boost.io/release/${BOOST_VERSION}/source/${TARGET_FILE_NAME}
     SOURCE_DIR ${BOOST_FETCH_DIR}
 )
