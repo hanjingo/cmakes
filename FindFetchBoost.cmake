@@ -12,19 +12,27 @@ endif()
 if (NOT BOOST_VERSION_PATCH)
     set(BOOST_VERSION_PATCH "0" CACHE STRING "boost patch version")
 endif()
-set(${BOOST_VERSION} ${BOOST_VERSION_MAJOR}.${BOOST_VERSION_MINOR}.${BOOST_VERSION_PATCH} CACHE STRING "boost version")
+set(BOOST_VERSION "${BOOST_VERSION_MAJOR}.${BOOST_VERSION_MINOR}.${BOOST_VERSION_PATCH}")
 
 if (NOT BOOST_FETCH_WAY)
     set(BOOST_FETCH_WAY "https" CACHE STRING "booset fetch way: https, git, ...")
 endif()
-if (NOT BOOST_ROOT)
-    set(BOOST_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/boost/${BOOST_VERSION})
+if (NOT BOOST_FETCH_DIR)
+    set(BOOST_FETCH_DIR ${CMAKE_CURRENT_SOURCE_DIR}/boost/${BOOST_VERSION})
 endif()
-if (NOT Boost_INCLUDE_DIRS)
-    set(Boost_INCLUDE_DIRS ${BOOST_ROOT} CACHE PATH "boost include dir")
+
+if (BOOST_STAGEDIR)
+    list(APPEND OPTIONS stage --stagedir=${BOOST_STAGEDIR})
 endif()
-if (NOT Boost_LIBRARY_DIRS)
-    set(Boost_LIBRARY_DIRS ${BOOST_LIB_PATH}/lib CACHE PATH "boost library dir")
+
+if (USE_STATIC_LIBS)
+    list(APPEND OPTIONS --link=static)
+else()
+    # TODO
+endif()
+
+if (BOOST_PREFIX)
+    list(APPEND OPTIONS --prefix=${BOOST_PREFIX})
 endif()
 
 option(USE_BOOST_ALL             "enable all boost component" OFF)
@@ -225,22 +233,18 @@ if (${LEN} EQUAL "0")
     list(APPEND OPTIONS --without-wave)
 endif()
 
-if (USE_STATIC_LIBS)
-    list(APPEND OPTIONS stage --stagedir=${BOOST_LIB_PATH} --link=static)
-else()
-    # TODO
-endif()
-
 #-------------------------fetch declare------------------------
+
+set(TARGET_FILE_NAME "boost_${BOOST_VERSION_MAJOR}_${BOOST_VERSION_MINOR}_${BOOST_VERSION_PATCH}.tar.gz")
 
 # boost
 FetchContent_Declare(
     ${BOOST_FETCH_WAY}_boost_${BOOST_VERSION}
-    URL https://archives.boost.io/release/${BOOST_VERSION}/source/boost_${BOOST_VERSION_MAJOR}_${BOOST_VERSION_MINOR}_${BOOST_VERSION_PATCH}.zip
-    SOURCE_DIR ${BOOST_ROOT}
+    URL https://archives.boost.io/release/${BOOST_VERSION}/source/${TARGET_FILE_NAME}
+    SOURCE_DIR ${BOOST_FETCH_DIR}
 )
 
-set( BOOST_FETCH_CONTENT "${BOOST_FETCH_WAY}_boost_${BOOST_VERSION}" )
+set(BOOST_FETCH_CONTENT "${BOOST_FETCH_WAY}_boost_${BOOST_VERSION}")
 
 #-------------------------config---------------------------------
 if (UNIX)
@@ -262,19 +266,24 @@ if (MINGW)
 endif()
 
 # -----------------------check-----------------------------
+if (NOT ${BOOST_FETCH_WAY} STREQUAL "https")
+    message(FATAL_ERROR "not support to fetch boost by ${BOOST_FETCH_WAY}!!!")
+endif()
 
 # -----------------------build-----------------------------
 if (${FETCH_BOOST_PASS})
     FetchContent_GetProperties(${BOOST_FETCH_CONTENT})
     if(NOT ${BOOST_FETCH_CONTENT}_POPULATED)
         # Fetch the content using previously declared details
-        message("Downloading ${BOOST_FETCH_CONTENT}, please wait...")
+        message("Downloading ${BOOST_FETCH_CONTENT} to ${BOOST_FETCH_DIR}, please wait...")
         FetchContent_Populate(${BOOST_FETCH_CONTENT})
     endif()
 
+    message("Configing ${BOOST_FETCH_CONTENT}, please wait...")
     execute_process(COMMAND ${CONFIG_CMD}
-                    WORKING_DIRECTORY ${BOOST_ROOT})
+                    WORKING_DIRECTORY ${BOOST_FETCH_DIR})
 
+    message("Building ${BOOST_FETCH_CONTENT}, please wait...")
     execute_process(COMMAND ${BUILD_CMD} ${ARGS} ${OPTIONS}
-                    WORKING_DIRECTORY ${BOOST_ROOT})
+                    WORKING_DIRECTORY ${BOOST_FETCH_DIR})
 endif()
