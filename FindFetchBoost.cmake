@@ -21,18 +21,8 @@ if (NOT BOOST_FETCH_DIR)
     set(BOOST_FETCH_DIR ${CMAKE_CURRENT_SOURCE_DIR}/boost/${BOOST_VERSION})
 endif()
 
-if (BOOST_STAGEDIR)
-    list(APPEND OPTIONS stage --stagedir=${BOOST_STAGEDIR})
-endif()
-
-if (USE_STATIC_LIBS)
-    list(APPEND OPTIONS --link=static)
-else()
-    # TODO
-endif()
-
 if (BOOST_PREFIX)
-    list(APPEND OPTIONS --prefix=${BOOST_PREFIX})
+    list(APPEND CFG_OPTIONS --prefix=${BOOST_PREFIX})
 endif()
 
 option(USE_BOOST_ALL             "enable all boost component" OFF)
@@ -68,6 +58,8 @@ option(USE_BOOST_THREAD          "enable boost thread" OFF)
 option(USE_BOOST_TIMER           "enable boost timer" OFF)
 option(USE_BOOST_TYPE_ERASURE    "enable boost type_erasure" OFF)
 option(USE_BOOST_WAVE            "enable boost wave" OFF)
+
+set(BUILD_CMD "")
 
 if (USE_BOOST_ALL OR USE_BOOST_ATOMIC)
     list(APPEND OPTIONS --with-atomic)
@@ -233,6 +225,15 @@ if (${LEN} EQUAL "0")
     list(APPEND OPTIONS --without-wave)
 endif()
 
+if (BOOST_STAGEDIR)
+    list(APPEND OPTIONS "stage --stagedir=\"${BOOST_STAGEDIR}\"")
+endif()
+
+if (USE_STATIC_LIBS)
+    list(APPEND OPTIONS --link=static)
+else()
+    # TODO
+endif()
 #-------------------------fetch declare------------------------
 
 set(TARGET_FILE_NAME "boost_${BOOST_VERSION_MAJOR}_${BOOST_VERSION_MINOR}_${BOOST_VERSION_PATCH}.tar.gz")
@@ -248,15 +249,15 @@ set(BOOST_FETCH_CONTENT "${BOOST_FETCH_WAY}_boost_${BOOST_VERSION}")
 
 #-------------------------config---------------------------------
 if (UNIX)
-    set(CONFIG_CMD bootstrap.sh)
+    set(BOOTSTRAP ./bootstrap.sh)
 
-    set(BUILD_CMD b2)
+    set(B2 ./b2)
 endif()
 
 if (WIN32)
-    set(CONFIG_CMD bootstrap.bat)
+    set(BOOTSTRAP bootstrap.bat)
 
-    set(BUILD_CMD b2.exe)
+    set(B2 b2.exe)
 endif()
     
 if (APPLE)
@@ -264,6 +265,17 @@ endif()
     
 if (MINGW)
 endif()
+
+set(BOOTSTRAP_ARGS "")
+foreach(var ${CFG_OPTIONS})
+    string(APPEND BOOTSTRAP_ARGS " ${var}")
+endforeach(var ${CFG_OPTIONS})
+
+set(B2_ARGS "")
+foreach(var ${OPTIONS})
+    string(APPEND B2_ARGS " ${var}")
+endforeach(var ${OPIONS})
+string(APPEND B2_ARGS " install")
 
 # -----------------------check-----------------------------
 if (NOT ${BOOST_FETCH_WAY} STREQUAL "https")
@@ -279,11 +291,12 @@ if (${FETCH_BOOST_PASS})
         FetchContent_Populate(${BOOST_FETCH_CONTENT})
     endif()
 
-    message("Configing ${BOOST_FETCH_CONTENT}, please wait...")
-    execute_process(COMMAND ${CONFIG_CMD}
+    
+    message("${BOOTSTRAP} ${BOOTSTRAP_ARGS}")
+    execute_process(COMMAND ${BOOTSTRAP} ${BOOTSTRAP_ARGS}
                     WORKING_DIRECTORY ${BOOST_FETCH_DIR})
 
-    message("Building ${BOOST_FETCH_CONTENT}, please wait...")
-    execute_process(COMMAND ${BUILD_CMD} ${ARGS} ${OPTIONS}
+    message("${B2} ${B2_ARGS}")
+    execute_process(COMMAND ${B2} ${B2_ARGS}
                     WORKING_DIRECTORY ${BOOST_FETCH_DIR})
 endif()

@@ -4,26 +4,25 @@ include(FetchContent)
 # option
 set(FETCH_LIBZMQ_PASS true)
 
-if (NOT LIBZMQ_VERSION)
-    set(LIBZMQ_VERSION "4.3.4" CACHE STRING "libzmq version")
+if (NOT LIBZMQ_VERSION_MAJOR)
+    set(LIBZMQ_VERSION_MAJOR "4" CACHE STRING "LIBZMQ major version")
 endif()
+if (NOT LIBZMQ_VERSION_MINOR)
+    set(LIBZMQ_VERSION_MINOR "3" CACHE STRING "LIBZMQ minor version")
+endif()
+if (NOT LIBZMQ_VERSION_PATCH)
+    set(LIBZMQ_VERSION_PATCH "4" CACHE STRING "LIBZMQ patch version")
+endif()
+set(LIBZMQ_VERSION "${LIBZMQ_VERSION_MAJOR}.${LIBZMQ_VERSION_MINOR}.${LIBZMQ_VERSION_PATCH}")
+
 if (NOT LIBZMQ_FETCH_WAY)
     set(LIBZMQ_FETCH_WAY "https" CACHE STRING "libzmq fetch way: https, git, ...")
 endif()
-if (NOT LIBZMQ_ROOT)
-    set(LIBZMQ_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/libzmq/${LIBZMQ_VERSION})
+if (NOT LIBZMQ_FETCH_DIR)
+    set(LIBZMQ_FETCH_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libzmq/${LIBZMQ_VERSION})
 endif()
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug")
-endif()
-if (NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LIBZMQ_ROOT}/lib)
-endif()
-if (NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LIBZMQ_ROOT}/lib)
-endif()
-if (NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${LIBZMQ_ROOT}/bin)
 endif()
 if(MSVC)
     set(MSVC_TOOLSET "-${CMAKE_VS_PLATFORM_TOOLSET}")
@@ -34,25 +33,29 @@ endif()
 # --------------------------------------------------------------------------------
 # fetch declare
 
-# libzmq 4.3.4
+# libzmq+https
 FetchContent_Declare(
-    https_libzmq_4.3.4
-    URL https://github.com/zeromq/libzmq/releases/download/v4.3.4/zeromq-4.3.4.zip
-    SOURCE_DIR ${LIBZMQ_ROOT}
+    https_libzmq
+    URL https://github.com/zeromq/libzmq/releases/download/v${LIBZMQ_VERSION}/zeromq-${LIBZMQ_VERSION}.zip
+    SOURCE_DIR ${LIBZMQ_FETCH_DIR}
 )
 FetchContent_Declare(
-    git_libzmq_4.3.4
+    git_libzmq
     GIT_REPOSITORY https://github.com/zeromq/libzmq.git
-    GIT_TAG v4.3.4
-    SOURCE_DIR ${LIBZMQ_ROOT}
+    GIT_TAG v${LIBZMQ_VERSION}
+    SOURCE_DIR ${LIBZMQ_FETCH_DIR}
 )
 
-set( LIBZMQ_FETCH_CONTENT "${LIBZMQ_FETCH_WAY}_libzmq_${LIBZMQ_VERSION}" )
+set( LIBZMQ_FETCH_CONTENT "${LIBZMQ_FETCH_WAY}_libzmq" )
 
 # --------------------------------------------------------------------------------
 # config
 
 if (UNIX)
+    # example: cmake .. -DBUILD_STATIC=ON
+    set(CMAKE_CMD cmake)
+
+    set(BUILD_CMD "")
 endif()
 
 if (WIN32)
@@ -93,7 +96,7 @@ if (${FETCH_LIBZMQ_PASS})
         FetchContent_Populate(${LIBZMQ_FETCH_CONTENT})
     endif()
 
-    set(BUILD_DIR ${LIBZMQ_ROOT}/build)
+    set(BUILD_DIR ${LIBZMQ_FETCH_DIR}/build)
     file(MAKE_DIRECTORY ${BUILD_DIR})
 
     execute_process(COMMAND ${CMAKE_CMD} ${CMAKE_ARGS}
@@ -104,7 +107,7 @@ if (${FETCH_LIBZMQ_PASS})
 
 endif()
 
-set(Libzmq_INCLUDE_DIRS ${LIBZMQ_ROOT}/include 
+set(Libzmq_INCLUDE_DIRS ${LIBZMQ_FETCH_DIR}/include 
     CACHE PATH "Libzmq head file path")
 set(Libzmq_LIBRARY_DIRS ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_BUILD_TYPE} 
     CACHE PATH "Libzmq library file path")

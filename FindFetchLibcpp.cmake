@@ -17,9 +17,9 @@ set(LIBCPP_VERSION "${LIBCPP_VERSION_MAJOR}.${LIBCPP_VERSION_MINOR}.${LIBCPP_VER
 if (NOT LIBCPP_FETCH_WAY)
     set(LIBCPP_FETCH_WAY "https" CACHE STRING "libcpp fetch way: https, git, ...")
 endif()
-# if (NOT LIBCPP_FETCH_DIR)
-#     set(LIBCPP_FETCH_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libcpp/${LIBCPP_VERSION})
-# endif()
+if (NOT LIBCPP_FETCH_DIR)
+    set(LIBCPP_FETCH_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libcpp/${LIBCPP_VERSION})
+endif()
 
 #-------------------------fetch declare------------------------
 
@@ -27,7 +27,7 @@ endif()
 FetchContent_Declare(
     https_libcpp
     URL https://github.com/hanjingo/libcpp/archive/refs/heads/main.zip
-    # SOURCE_DIR ${LIBCPP_FETCH_DIR}
+    SOURCE_DIR ${LIBCPP_FETCH_DIR}
 )
 
 # libcpp + git
